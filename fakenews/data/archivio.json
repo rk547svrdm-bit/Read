@@ -1,0 +1,40 @@
+{
+  "smentite": [
+    {
+      "data": "2026-06-19",
+      "claim": "Mangiare ananas dopo i pasti scioglie i grassi",
+      "categoria": "salute",
+      "verdetto": "falso",
+      "titolo": "L'ananas non scioglie i grassi: cosa dice davvero la scienza",
+      "sommario": "La bromelina contenuta nell'ananas non ha effetti dimostrati sulla digestione dei grassi nell'essere umano.",
+      "confidenza": 97
+    },
+    {
+      "data": "2026-06-18",
+      "claim": "Le banane mature fanno ingrassare molto più di quelle verdi",
+      "categoria": "salute",
+      "verdetto": "fuorviante",
+      "titolo": "Banana matura vs verde: la differenza è minima e dipende dal contesto",
+      "sommario": "L'indice glicemico varia tra le due, ma l'effetto sul peso è trascurabile nel contesto di una dieta equilibrata.",
+      "confidenza": 88
+    },
+    {
+      "data": "2026-06-17",
+      "claim": "Bere caffè disidrata sempre il corpo",
+      "categoria": "salute",
+      "verdetto": "impreciso",
+      "titolo": "Il caffè e l'idratazione: la scienza ha aggiornato la risposta",
+      "sommario": "Studi recenti mostrano che il caffè in quantità moderate non causa disidratazione nei bevitori abituali.",
+      "confidenza": 82
+    },
+    {
+      "data": "2026-06-16",
+      "claim": "Lo zucchero di canna è molto più sano dello zucchero bianco",
+      "categoria": "salute",
+      "verdetto": "fuorviante",
+      "titolo": "Zucchero di canna vs bianco: quasi identici per l'organismo",
+      "sommario": "La differenza nutrizionale tra i due è trascurabile: entrambi sono saccarosio quasi puro.",
+      "confidenza": 94
+    }
+  ]
+}
