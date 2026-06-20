@@ -127,4 +127,191 @@
   if (playButton) {
     playButton.addEventListener('click', runSimulation);
   }
+
+  /* ===== Live data loading from oggi.json / archivio.json ===== */
+
+  var verdettoCssMap = {
+    'falso': 'verdict-false',
+    'fuorviante': 'verdict-misleading',
+    'impreciso': 'verdict-imprecise',
+    'vero_ma_decontestualizzato': 'verdict-imprecise',
+    'vero': 'verdict-true'
+  };
+
+  var verdettoLabelMap = {
+    'falso': 'Falso',
+    'fuorviante': 'Fuorviante',
+    'impreciso': 'Impreciso',
+    'vero_ma_decontestualizzato': 'Vero ma decontestualizzato',
+    'vero': 'Vero'
+  };
+
+  function renderClaim(data) {
+    var card = document.getElementById('case-claim');
+    if (!card || !data.fake_news) { return; }
+
+    var fn = data.fake_news;
+
+    // Update the claim label with real detection time
+    var label = card.querySelector('.case-label');
+    if (label && fn.scoperta_alle) {
+      label.textContent = '🔴 Bufala rilevata alle ' + fn.scoperta_alle;
+    }
+
+    // Update the claim text
+    var h3 = card.querySelector('h3');
+    if (h3 && fn.claim) {
+      h3.textContent = '“' + fn.claim + '”';
+    }
+
+    // Update the risk badge with real diffusione value
+    var badge = card.querySelector('.risk-badge');
+    if (badge && fn.diffusione) {
+      badge.textContent = 'Livello di diffusione stimato: ' + fn.diffusione;
+    }
+  }
+
+  function renderVerdict(data) {
+    var card = document.getElementById('case-verdict');
+    if (!card) { return; }
+
+    // Show article title/sommario even if verdict is not yet complete
+    var articolo = data.articolo;
+    if (articolo && articolo.approvato) {
+      var labelEl = card.querySelector('.case-label');
+      if (labelEl) {
+        labelEl.textContent = '✅ Smentita pubblicata alle ' + (articolo.approvato_alle || '19:00');
+      }
+    }
+
+    var verdetto = data.verdetto;
+    if (!verdetto) { return; }
+
+    // Update verdict tag
+    var h3 = card.querySelector('h3');
+    if (h3) {
+      var etichetta = verdettoLabelMap[verdetto.verdetto] || verdetto.verdetto || 'N/D';
+      var cssClass = verdettoCssMap[verdetto.verdetto] || 'verdict-false';
+      h3.innerHTML = 'Verdetto: <span class="verdict-tag ' + cssClass + '">' + etichetta + '</span>';
+    }
+
+    // Populate evidence list from punti_chiave
+    var ul = card.querySelector('.evidence-list');
+    if (ul && verdetto.punti_chiave && verdetto.punti_chiave.length) {
+      ul.innerHTML = '';
+      verdetto.punti_chiave.forEach(function (punto) {
+        var li = document.createElement('li');
+        li.textContent = punto;
+        ul.appendChild(li);
+      });
+    }
+
+    // Update sources note with article title/sommario if available
+    if (articolo && articolo.titolo) {
+      var sourcesNote = card.querySelector('.sources-note');
+      if (sourcesNote) {
+        sourcesNote.innerHTML = '<strong>' + articolo.titolo + '</strong><br><span class="muted">' + (articolo.sommario || '') + '</span>';
+      }
+    }
+  }
+
+  function renderArchive(archivio) {
+    var grid = document.getElementById('archive-grid');
+    if (!grid || !archivio || !archivio.smentite) { return; }
+
+    grid.innerHTML = '';
+
+    archivio.smentite.forEach(function (voce) {
+      var card = document.createElement('article');
+      card.className = 'archive-card';
+
+      // Format date to Italian locale
+      var dataDisplay = voce.data;
+      try {
+        var d = new Date(voce.data + 'T12:00:00');
+        dataDisplay = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (e) { /* use raw string */ }
+
+      var cssClass = verdettoCssMap[voce.verdetto] || 'verdict-false';
+      var etichetta = verdettoLabelMap[voce.verdetto] || voce.verdetto || 'N/D';
+
+      card.innerHTML =
+        '<span class="archive-date">' + dataDisplay + '</span>' +
+        '<h4>“' + (voce.claim || '') + '”</h4>' +
+        '<span class="verdict-tag ' + cssClass + '">' + etichetta + '</span>';
+
+      grid.appendChild(card);
+    });
+  }
+
+  function updateTimelineFromData(data) {
+    if (!data || !data.pipeline) { return; }
+
+    var pipeline = data.pipeline;
+    var items = document.querySelectorAll('#timeline-list .timeline-item[data-phase]');
+
+    items.forEach(function (item) {
+      var fase = item.getAttribute('data-phase');
+      var info = pipeline[fase];
+      if (!info) { return; }
+
+      item.classList.remove('is-done', 'is-active');
+
+      if (info.stato === 'completato') {
+        item.classList.add('is-done');
+      } else if (info.stato === 'in_corso') {
+        item.classList.add('is-active');
+      }
+      // 'in_attesa' and 'errore' leave the item without extra class
+    });
+  }
+
+  async function loadPipelineData() {
+    var today = new Date().toISOString().slice(0, 10);
+    var liveBadge = document.getElementById('live-badge');
+
+    try {
+      // Fetch oggi.json
+      var res = await fetch('data/oggi.json');
+      if (!res.ok) { throw new Error('oggi.json non disponibile (HTTP ' + res.status + ')'); }
+      var data = await res.json();
+
+      // Only use data if it matches today's date
+      if (data.data !== today) {
+        console.info('[VERA] oggi.json è del giorno', data.data, '— non oggi (', today, '). Uso modalità demo.');
+        return;
+      }
+
+      console.info('[VERA] Dati live caricati per', today, '— stato:', data.stato);
+
+      // Show LIVE badge
+      if (liveBadge) { liveBadge.style.display = 'inline'; }
+
+      // Render live claim and verdict
+      renderClaim(data);
+      renderVerdict(data);
+
+      // Override timeline state from real pipeline data
+      updateTimelineFromData(data);
+
+    } catch (e) {
+      console.info('[VERA] Impossibile caricare dati live:', e.message, '— modalità demo attiva.');
+    }
+
+    // Always try to load and render the archive
+    try {
+      var archRes = await fetch('data/archivio.json');
+      if (archRes.ok) {
+        var archivio = await archRes.json();
+        renderArchive(archivio);
+        console.info('[VERA] Archivio caricato:', (archivio.smentite || []).length, 'voci.');
+      }
+    } catch (e) {
+      console.info('[VERA] Impossibile caricare archivio:', e.message);
+    }
+  }
+
+  // Kick off live data loading
+  loadPipelineData();
+
 })();

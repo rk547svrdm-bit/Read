@@ -212,10 +212,11 @@
         <div class="pipeline-status" id="pipeline-status">
           <span class="status-dot" id="status-dot" aria-hidden="true"></span>
           <span id="status-text">Caricamento dello stato della pipeline…</span>
+          <span id="live-badge" style="display:none; margin-left:0.75rem; background:#16a34a; color:#fff; font-size:0.7rem; font-weight:700; letter-spacing:0.08em; padding:0.15em 0.5em; border-radius:3px; vertical-align:middle;">LIVE</span>
         </div>
 
         <ol class="timeline" id="timeline-list">
-          <li class="timeline-item" data-time="08:00" data-end="09:30">
+          <li class="timeline-item" data-time="08:00" data-end="09:30" data-phase="scout">
             <span class="timeline-time">08:00</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -223,7 +224,7 @@
               <p>Scout individua la fake news del giorno e ne stima la diffusione.</p>
             </div>
           </li>
-          <li class="timeline-item" data-time="09:30" data-end="11:00">
+          <li class="timeline-item" data-time="09:30" data-end="11:00" data-phase="investigatore">
             <span class="timeline-time">09:30</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -231,7 +232,7 @@
               <p>L'investigatore ricostruisce origine e diffusione della notizia.</p>
             </div>
           </li>
-          <li class="timeline-item" data-time="11:00" data-end="13:00">
+          <li class="timeline-item" data-time="11:00" data-end="13:00" data-phase="ricercatore">
             <span class="timeline-time">11:00</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -239,7 +240,7 @@
               <p>Il ricercatore raduna dati, studi e dichiarazioni ufficiali pertinenti.</p>
             </div>
           </li>
-          <li class="timeline-item" data-time="13:00" data-end="15:30">
+          <li class="timeline-item" data-time="13:00" data-end="15:30" data-phase="fact_checker">
             <span class="timeline-time">13:00</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -247,7 +248,7 @@
               <p>Gli agenti confrontano le prove e formulano un verdetto motivato.</p>
             </div>
           </li>
-          <li class="timeline-item" data-time="15:30" data-end="17:00">
+          <li class="timeline-item" data-time="15:30" data-end="17:00" data-phase="redattore">
             <span class="timeline-time">15:30</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -255,7 +256,7 @@
               <p>Il redattore scrive una smentita chiara, equilibrata e leggibile da tutti.</p>
             </div>
           </li>
-          <li class="timeline-item" data-time="17:00" data-end="19:00">
+          <li class="timeline-item" data-time="17:00" data-end="19:00" data-phase="supervisore">
             <span class="timeline-time">17:00</span>
             <span class="timeline-dot" aria-hidden="true"></span>
             <div class="timeline-content">
@@ -283,14 +284,14 @@
         </p>
 
         <div class="case-grid">
-          <article class="case-card case-claim">
+          <article class="case-card case-claim" id="case-claim">
             <span class="case-label">🔴 Bufala rilevata alle 08:14</span>
             <h3>"Un bicchiere di acqua e bicarbonato a digiuno 'pulisce' il fegato e fa perdere 3 kg in una settimana"</h3>
             <p class="muted">Diffusa principalmente tramite catene di messaggistica e brevi video sui social, con migliaia di condivisioni nelle prime ore del mattino.</p>
             <span class="risk-badge">Livello di diffusione stimato: alto</span>
           </article>
 
-          <article class="case-card case-verdict">
+          <article class="case-card case-verdict" id="case-verdict">
             <span class="case-label">✅ Smentita pubblicata alle 19:00</span>
             <h3>Verdetto: <span class="verdict-tag verdict-false">Falso</span></h3>
             <ul class="evidence-list">
@@ -314,7 +315,7 @@
           Ogni sera, alle 19:00, l'edizione del giorno entra in archivio: una raccolta consultabile di
           tutte le bufale analizzate e dei relativi verdetti. Le voci qui sotto sono di esempio.
         </p>
-        <div class="archive-grid">
+        <div class="archive-grid" id="archive-grid">
           <article class="archive-card">
             <span class="archive-date">7 giugno 2026</span>
             <h4>"Mangiare l'ananas dopo i pasti scioglie i grassi"</h4>
