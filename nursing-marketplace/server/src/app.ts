@@ -6,13 +6,16 @@ import { clientRouter } from "./modules/clients/client.routes.js";
 import { auctionRouter } from "./modules/auctions/auction.routes.js";
 import { bookingRouter } from "./modules/bookings/booking.routes.js";
 import { reviewRouter } from "./modules/reviews/review.routes.js";
+import { documentRouter } from "./modules/documents/document.routes.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
   const app = express();
 
   app.use(cors());
-  app.use(express.json());
+  // Limite alzato rispetto al default (100kb) perché i documenti caricati
+  // dagli infermieri arrivano come data URL base64 nel body JSON.
+  app.use(express.json({ limit: "8mb" }));
 
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
@@ -22,6 +25,7 @@ export function createApp() {
   app.use("/auctions", auctionRouter);
   app.use("/bookings", bookingRouter);
   app.use("/reviews", reviewRouter);
+  app.use("/documents", documentRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

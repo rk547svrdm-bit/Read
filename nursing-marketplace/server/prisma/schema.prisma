@@ -77,8 +77,30 @@ model NurseProfile {
 
   services            NurseService[]
   auctions            Auction[]
+  documents           NurseDocument[]
 
   @@index([city])
+}
+
+// Documentazione caricata dal professionista per attestare la propria
+// regolarità (iscrizione all'albo, assicurazione RC, identità) e le proprie
+// certificazioni/corsi. Lo stato viene aggiornato da un amministratore dopo
+// verifica; i tipi sensibili (identità, assicurazione, iscrizione albo) non
+// vengono mai esposti pubblicamente come file, solo come badge "verificato".
+model NurseDocument {
+  id        String   @id @default(cuid())
+  nurseId   String
+  nurse     NurseProfile @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  type      String   // vedi DOCUMENT_TYPES
+  label     String
+  fileUrl   String   // URL esterno o data URL caricato dal professionista
+  status    String   @default("PENDING") // vedi DOCUMENT_STATUS
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([nurseId])
 }
 
 model ClientProfile {

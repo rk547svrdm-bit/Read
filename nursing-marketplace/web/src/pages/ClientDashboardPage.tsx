@@ -3,7 +3,16 @@ import { Link } from "react-router-dom";
 import { api } from "../api/client";
 import { Avatar } from "../components/Avatar";
 import { AuctionTypeBadge } from "../components/Badges";
+import { HandshakeIcon } from "../components/Icon";
 import type { AuctionType, NurseProfile, NurseService } from "../api/types";
+
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  CONFIRMED: "Confermata",
+  IN_PROGRESS: "In corso",
+  COMPLETED: "Completata",
+  CANCELLED: "Annullata",
+  DISPUTED: "Contestata",
+};
 
 interface BookingWithAuction {
   id: string;
@@ -52,7 +61,9 @@ export function ClientDashboardPage() {
             <p>{b.auction.type === "HOURLY" ? "Tariffa oraria" : b.auction.service?.name}</p>
             <div className="booking-card-footer">
               <span className="price-badge price-badge-hourly">{b.finalPrice} €</span>
-              <span className={`status-pill status-${b.status.toLowerCase()}`}>{b.status}</span>
+              <span className={`status-pill status-${b.status.toLowerCase()}`}>
+                <HandshakeIcon size={13} /> {BOOKING_STATUS_LABELS[b.status] ?? b.status}
+              </span>
             </div>
           </div>
         ))}

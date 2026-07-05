@@ -1,12 +1,34 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
-import type { Auction, CareSetting, NurseProfile, NurseService, ShiftType } from "../api/types";
-import { CARE_SETTINGS_OPTIONS, SERVICE_SUGGESTIONS, SHIFT_TYPE_OPTIONS } from "../constants";
+import type {
+  Auction,
+  CareSetting,
+  DocumentType,
+  NurseDocument,
+  NurseProfile,
+  NurseService,
+  ShiftType,
+} from "../api/types";
+import {
+  CARE_SETTINGS_OPTIONS,
+  DOCUMENT_TYPE_OPTIONS,
+  SAMPLE_AVATARS,
+  SERVICE_SUGGESTIONS,
+  SHIFT_TYPE_OPTIONS,
+} from "../constants";
 import { Avatar } from "../components/Avatar";
 import { AuctionTypeBadge, AuctionStatusBadge, PriceBadge } from "../components/Badges";
 import { CountdownTimer } from "../components/CountdownTimer";
-import { ClockIcon, PlusIcon, SyringeIcon, TrashIcon } from "../components/Icon";
+import {
+  ClockIcon,
+  FileTextIcon,
+  PlusIcon,
+  ShieldCheckIcon,
+  SyringeIcon,
+  TrashIcon,
+  UploadIcon,
+} from "../components/Icon";
 
 function toCsv(values: string[]): string {
   return values.join(", ");
@@ -23,6 +45,7 @@ export function NurseDashboardPage() {
   const [profile, setProfile] = useState<NurseProfile | null>(null);
   const [services, setServices] = useState<NurseService[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [documents, setDocuments] = useState<NurseDocument[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -66,12 +89,14 @@ export function NurseDashboardPage() {
         preferredShifts: p.preferredShifts,
         careSettings: p.careSettings,
       });
-      const [myServices, myAuctions] = await Promise.all([
+      const [myServices, myAuctions, myDocuments] = await Promise.all([
         api.get<NurseService[]>("/nurses/me/services"),
         api.get<Auction[]>(`/auctions?nurseId=${p.id}&status=OPEN`),
+        api.get<NurseDocument[]>("/nurses/me/documents"),
       ]);
       setServices(myServices);
       setAuctions(myAuctions);
+      setDocuments(myDocuments);
     } catch {
       // profilo non ancora inizializzato: si parte da un form vuoto
     }
@@ -169,6 +194,19 @@ export function NurseDashboardPage() {
               value={form.photoUrl}
               onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
             />
+            <p className="muted small">Non hai ancora una foto? Scegli un avatar di esempio:</p>
+            <div className="avatar-picker">
+              {SAMPLE_AVATARS.map((src) => (
+                <button
+                  key={src}
+                  type="button"
+                  className={`avatar-picker-option ${form.photoUrl === src ? "selected" : ""}`}
+                  onClick={() => setForm({ ...form, photoUrl: src })}
+                >
+                  <img src={src} alt="Avatar di esempio" width={48} height={48} />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -326,8 +364,134 @@ export function NurseDashboardPage() {
             auctions={auctions}
             onChanged={loadAll}
           />
+
+          <DocumentsManager documents={documents} onChanged={loadAll} />
         </>
       )}
+    </div>
+  );
+}
+
+const DOCUMENT_STATUS_LABELS: Record<NurseDocument["status"], string> = {
+  PENDING: "In attesa di verifica",
+  VERIFIED: "Verificato",
+  REJECTED: "Rifiutato",
+};
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+const MAX_DOCUMENT_SIZE_BYTES = 4 * 1024 * 1024;
+
+function DocumentsManager({
+  documents,
+  onChanged,
+}: {
+  documents: NurseDocument[];
+  onChanged: () => void;
+}) {
+  const [type, setType] = useState<DocumentType>("LICENSE");
+  const [label, setLabel] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!file) {
+      setError("Seleziona un file da caricare");
+      return;
+    }
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      setError("Il file supera i 4 MB consentiti");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const fileUrl = await fileToDataUrl(file);
+      await api.post("/nurses/me/documents", { type, label, fileUrl });
+      setLabel("");
+      setFile(null);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Errore imprevisto");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setError(null);
+    try {
+      await api.delete(`/nurses/me/documents/${id}`);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Errore imprevisto");
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3>
+        <ShieldCheckIcon size={18} /> Documenti e verifiche
+      </h3>
+      <p className="muted small">
+        Carica iscrizione all'albo/OPI, assicurazione RC professionale e documento d'identità per far
+        verificare la tua regolarità al team Bay Nurse: ai clienti mostriamo solo il badge "verificato", mai
+        il file. Le certificazioni (corsi, attestati) restano invece consultabili pubblicamente una volta
+        verificate.
+      </p>
+
+      <form className="add-service-form" onSubmit={handleUpload}>
+        <select value={type} onChange={(e) => setType(e.target.value as DocumentType)}>
+          {DOCUMENT_TYPE_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <input
+          placeholder="Es. Iscrizione OPI Torino"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          required
+        />
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setFile(e.target.files?.[0] ?? null)} required />
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          <UploadIcon size={16} /> Carica
+        </button>
+      </form>
+      {error && <p className="error">{error}</p>}
+
+      <div className="service-manage-list">
+        {documents.map((doc) => (
+          <div key={doc.id} className="service-manage-row">
+            <div>
+              <FileTextIcon size={16} />
+              <strong>{doc.label}</strong>
+              <span className={`status-pill status-${doc.status.toLowerCase()}`}>
+                {DOCUMENT_STATUS_LABELS[doc.status]}
+              </span>
+            </div>
+            <div className="service-manage-actions">
+              <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost">
+                Visualizza
+              </a>
+              <button className="icon-button" onClick={() => handleDelete(doc.id)} aria-label="Elimina">
+                <TrashIcon size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+        {documents.length === 0 && <p className="muted">Non hai ancora caricato documenti.</p>}
+      </div>
     </div>
   );
 }

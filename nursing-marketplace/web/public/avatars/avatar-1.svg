@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#ef4444"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg1)"/>
+  <!-- shoulders / scrub top -->
+  <path d="M30 200c0-45 31-70 70-70s70 25 70 70z" fill="#0d9488"/>
+  <path d="M78 138h44v14a22 22 0 0 1-44 0z" fill="#e7c9a9"/>
+  <!-- collar -->
+  <path d="M70 148c10 10 20 15 30 15s20-5 30-15l-6 22h-48z" fill="#ffffff" opacity="0.9"/>
+  <!-- neck/head -->
+  <ellipse cx="100" cy="88" rx="34" ry="38" fill="#e7c9a9"/>
+  <!-- hair -->
+  <path d="M64 82c0-30 16-46 36-46s36 16 36 46c0-8-4-14-8-14-4 10-10 14-16 10 2 8-4 12-10 8 0 6-8 8-14 4-6 4-14 0-14-8-6 2-10-6-10 0z" fill="#3b2b21"/>
+  <!-- simple face -->
+  <circle cx="88" cy="90" r="3.2" fill="#2a1f18"/>
+  <circle cx="112" cy="90" r="3.2" fill="#2a1f18"/>
+  <path d="M90 104c5 5 15 5 20 0" stroke="#2a1f18" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- stethoscope -->
+  <path d="M78 150c0 14 4 24 16 24s16-10 16-22" stroke="#f8fafc" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="110" cy="152" r="5" fill="#f8fafc" opacity="0.85"/>
+</svg>

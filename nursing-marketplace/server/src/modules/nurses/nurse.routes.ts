@@ -14,6 +14,12 @@ import {
   updateServiceHandler,
   deleteServiceHandler,
 } from "../services/service.controller.js";
+import {
+  listMyDocumentsHandler,
+  createDocumentHandler,
+  deleteDocumentHandler,
+  getPublicVerificationHandler,
+} from "../documents/document.controller.js";
 
 export const nurseRouter = Router();
 
@@ -39,5 +45,16 @@ nurseRouter.delete(
   asyncHandler(deleteServiceHandler)
 );
 
+// Documenti di verifica (albo, assicurazione, identità, certificazioni) del professionista autenticato.
+nurseRouter.get("/me/documents", requireAuth, requireRole("NURSE"), asyncHandler(listMyDocumentsHandler));
+nurseRouter.post("/me/documents", requireAuth, requireRole("NURSE"), asyncHandler(createDocumentHandler));
+nurseRouter.delete(
+  "/me/documents/:documentId",
+  requireAuth,
+  requireRole("NURSE"),
+  asyncHandler(deleteDocumentHandler)
+);
+
 nurseRouter.get("/:id", asyncHandler(getNurseHandler));
 nurseRouter.get("/:id/services", asyncHandler(listPublicServicesHandler));
+nurseRouter.get("/:id/verification", asyncHandler(getPublicVerificationHandler));

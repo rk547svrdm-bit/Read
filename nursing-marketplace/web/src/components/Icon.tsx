@@ -135,3 +135,77 @@ export function EditIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Icona per il gesto di rilancio/offerta in asta. */
+export function HandRaisedIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M11 13V5a1.5 1.5 0 0 1 3 0v6" />
+      <path d="M14 11V4a1.5 1.5 0 0 1 3 0v7" />
+      <path d="M17 11.5a1.5 1.5 0 0 1 3 0V14" />
+      <path d="M8 13V7a1.5 1.5 0 0 1 3 0v7" />
+      <path d="M8 13c-1.5-1-3.3-.6-3.3 1 0 3 2.3 8 9.3 8 5 0 6-3.5 6-6v-3.5" />
+    </svg>
+  );
+}
+
+/** Icona per l'offerta vincente al momento. */
+export function TrophyIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 4h8v5a4 4 0 0 1-8 0Z" />
+      <path d="M8 5H5a1 1 0 0 0-1 1c0 2.5 1.8 4 4 4.3" />
+      <path d="M16 5h3a1 1 0 0 1 1 1c0 2.5-1.8 4-4 4.3" />
+      <path d="M12 13v3" />
+      <path d="M9 20h6" />
+      <path d="M10 16.5h4l.6 3.5H9.4Z" />
+    </svg>
+  );
+}
+
+/** Icona per la trattativa conclusa / asta aggiudicata. */
+export function HandshakeIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="m2 12 5-5 4 2 2-2 4 4-2 2 3 3-2.5 2.5L12 14l-2.5 2.5L7 14l-3 3-2-2Z" />
+      <path d="m11 9 3 3" />
+    </svg>
+  );
+}
+
+/** Icona generica "documento/certificato". */
+export function FileTextIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+      <path d="M14 3v4h4" />
+      <path d="M9 13h6M9 17h6M9 9h2" />
+    </svg>
+  );
+}
+
+export function ShieldCheckIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3 5 6v5c0 5 3 8.5 7 10 4-1.5 7-5 7-10V6Z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 3 5 6v5c0 5 3 8.5 7 10 4-1.5 7-5 7-10V6Z" />
+    </svg>
+  );
+}
+
+export function UploadIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M12 16V4M7 9l5-5 5 5" />
+      <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+    </svg>
+  );
+}

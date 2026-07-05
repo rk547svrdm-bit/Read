@@ -46,6 +46,11 @@ npm test
 | GET | `/bookings/me` | auth | Le proprie prenotazioni (aste vinte) |
 | POST | `/bookings/:id/reviews` | auth | Lascia una recensione a prestazione completata |
 | GET | `/reviews/users/:userId` | – | Recensioni ricevute da un utente |
+| GET | `/nurses/:id/verification` | – | Riepilogo pubblico verifiche (badge albo/assicurazione/identità + certificazioni consultabili) |
+| GET | `/nurses/me/documents` | NURSE | I propri documenti (albo, assicurazione, identità, certificazioni) |
+| POST | `/nurses/me/documents` | NURSE | Carica un documento (`type`, `label`, `fileUrl` come data URL o link) |
+| DELETE | `/nurses/me/documents/:documentId` | NURSE | Elimina un proprio documento |
+| PATCH | `/documents/:documentId` | ADMIN | Approva/rifiuta un documento (`status`) |
 
 La chiusura delle aste scadute avviene automaticamente in background
 (vedi `src/index.ts`); per testarla manualmente in sviluppo è disponibile

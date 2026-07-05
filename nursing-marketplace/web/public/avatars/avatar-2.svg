@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="100" fill="url(#bg2)"/>
+  <path d="M28 200c0-46 32-72 72-72s72 26 72 72z" fill="#7c3aed"/>
+  <path d="M78 136h44v14a22 22 0 0 1-44 0z" fill="#f4d7b6"/>
+  <path d="M70 146c10 10 20 15 30 15s20-5 30-15l-6 24h-48z" fill="#ffffff" opacity="0.92"/>
+  <ellipse cx="100" cy="86" rx="35" ry="39" fill="#f4d7b6"/>
+  <!-- hair bun style -->
+  <path d="M62 84c-2-32 15-52 38-52s40 20 38 52c-3-14-10-22-16-22 2 10-6 14-12 8 0 8-8 10-14 6-6 6-16 2-16-8-6 4-14-2-18 6z" fill="#241a14"/>
+  <circle cx="100" cy="34" r="12" fill="#241a14"/>
+  <circle cx="89" cy="88" r="3.2" fill="#2a1f18"/>
+  <circle cx="113" cy="88" r="3.2" fill="#2a1f18"/>
+  <path d="M91 102c5 5 15 5 20 0" stroke="#2a1f18" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- small cross pin -->
+  <rect x="94" y="150" width="14" height="4" rx="1.5" fill="#f8fafc" opacity="0.9"/>
+  <rect x="99" y="145" width="4" height="14" rx="1.5" fill="#f8fafc" opacity="0.9"/>
+</svg>

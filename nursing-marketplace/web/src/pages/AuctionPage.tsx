@@ -6,7 +6,14 @@ import type { Auction, Bid } from "../api/types";
 import { Avatar } from "../components/Avatar";
 import { AuctionTypeBadge, AuctionStatusBadge } from "../components/Badges";
 import { CountdownTimer } from "../components/CountdownTimer";
-import { CoinIcon } from "../components/Icon";
+import { CoinIcon, HandRaisedIcon, TrophyIcon } from "../components/Icon";
+
+const BID_STATUS_LABELS: Record<Bid["status"], string> = {
+  WINNING: "In testa",
+  OUTBID: "Superata",
+  ACTIVE: "Attiva",
+  WITHDRAWN: "Ritirata",
+};
 
 interface AuctionDetail extends Auction {
   bids: Bid[];
@@ -102,7 +109,7 @@ export function AuctionPage() {
               required
             />
             <button type="submit" className="btn-primary" disabled={submitting}>
-              {submitting ? "Invio…" : "Fai un'offerta"}
+              <HandRaisedIcon size={16} /> {submitting ? "Invio…" : "Fai un'offerta"}
             </button>
           </form>
         )}
@@ -117,7 +124,10 @@ export function AuctionPage() {
         {auction.bids.map((bid) => (
           <div key={bid.id} className={`bid-row ${bid.status === "WINNING" ? "bid-row-winning" : ""}`}>
             <span className="bid-amount">{bid.amount} €</span>
-            <span className={`status-pill status-${bid.status.toLowerCase()}`}>{bid.status}</span>
+            <span className={`status-pill status-${bid.status.toLowerCase()}`}>
+              {bid.status === "WINNING" ? <TrophyIcon size={13} /> : <HandRaisedIcon size={13} />}
+              {BID_STATUS_LABELS[bid.status]}
+            </span>
             <span className="muted small">{new Date(bid.createdAt).toLocaleString("it-IT")}</span>
           </div>
         ))}

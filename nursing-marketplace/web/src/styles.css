@@ -298,6 +298,7 @@ label { display: block; margin-bottom: 4px; font-size: 0.88rem; color: var(--mut
 .status-pill {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   border-radius: 999px;
   padding: 3px 10px;
   font-size: 0.75rem;
@@ -372,6 +373,37 @@ label { display: block; margin-bottom: 4px; font-size: 0.88rem; color: var(--mut
 .service-card { gap: 10px; display: flex; flex-direction: column; }
 .service-card-cta { display: inline-flex; align-items: center; gap: 8px; color: var(--service); font-weight: 700; text-decoration: none; font-size: 0.88rem; }
 
+/* ---------- Verifiche / documenti ---------- */
+
+.verification-card { margin: 18px 0; }
+
+.verification-badges { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 4px; }
+.verification-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.verification-badge em { font-style: normal; font-weight: 600; font-size: 0.78rem; opacity: 0.85; margin-left: 2px; }
+.verification-badge.verified { background: var(--hourly-bg); color: var(--hourly); }
+.verification-badge.unverified { background: var(--bg); color: var(--muted); }
+
+.certification-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.certification-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 10px 14px;
+  text-decoration: none;
+  color: var(--text);
+}
+.certification-row span:first-of-type { flex: 1; font-weight: 600; }
+
 /* ---------- Auction detail ---------- */
 
 .auction-hero { display: flex; flex-direction: column; gap: 14px; border-top: 5px solid var(--hourly); }
@@ -411,6 +443,19 @@ label { display: block; margin-bottom: 4px; font-size: 0.88rem; color: var(--mut
 /* ---------- Nurse dashboard ---------- */
 
 .photo-edit-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+
+.avatar-picker { display: flex; gap: 8px; }
+.avatar-picker-option {
+  background: transparent;
+  padding: 3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  box-shadow: none;
+  line-height: 0;
+}
+.avatar-picker-option img { border-radius: 50%; display: block; }
+.avatar-picker-option:hover { box-shadow: none; border-color: var(--border); }
+.avatar-picker-option.selected { border-color: var(--primary); }
 .photo-edit-input { flex: 1; }
 
 .checkbox-row { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }

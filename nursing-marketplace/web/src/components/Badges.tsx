@@ -1,4 +1,4 @@
-import { ClockIcon, SyringeIcon, CoinIcon } from "./Icon";
+import { ClockIcon, SyringeIcon, CoinIcon, HandshakeIcon, GavelIcon } from "./Icon";
 import type { AuctionStatus, AuctionType } from "../api/types";
 
 export function AuctionTypeBadge({ type }: { type: AuctionType }) {
@@ -32,6 +32,18 @@ const STATUS_LABELS: Record<AuctionStatus, string> = {
   CANCELLED: "Annullata",
 };
 
+const STATUS_ICONS: Record<AuctionStatus, typeof GavelIcon> = {
+  OPEN: GavelIcon,
+  CLOSED: ClockIcon,
+  AWARDED: HandshakeIcon,
+  CANCELLED: ClockIcon,
+};
+
 export function AuctionStatusBadge({ status }: { status: AuctionStatus }) {
-  return <span className={`status-pill status-${status.toLowerCase()}`}>{STATUS_LABELS[status]}</span>;
+  const StatusIcon = STATUS_ICONS[status];
+  return (
+    <span className={`status-pill status-${status.toLowerCase()}`}>
+      <StatusIcon size={13} /> {STATUS_LABELS[status]}
+    </span>
+  );
 }

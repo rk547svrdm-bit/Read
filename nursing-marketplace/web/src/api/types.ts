@@ -81,6 +81,34 @@ export interface Auction {
   service?: NurseService | null;
 }
 
+export type DocumentType = "LICENSE" | "INSURANCE" | "ID" | "CERTIFICATION" | "OTHER";
+export type DocumentStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
+  LICENSE: "Iscrizione Albo/OPI",
+  INSURANCE: "Assicurazione RC professionale",
+  ID: "Documento d'identità",
+  CERTIFICATION: "Certificazione / corso",
+  OTHER: "Altro",
+};
+
+export interface NurseDocument {
+  id: string;
+  nurseId: string;
+  type: DocumentType;
+  label: string;
+  fileUrl: string;
+  status: DocumentStatus;
+  createdAt: string;
+}
+
+export interface PublicVerification {
+  license: boolean;
+  insurance: boolean;
+  identity: boolean;
+  certifications: NurseDocument[];
+}
+
 export interface Bid {
   id: string;
   auctionId: string;

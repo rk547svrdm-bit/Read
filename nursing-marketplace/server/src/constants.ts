@@ -38,6 +38,16 @@ export const SERVICE_SUGGESTIONS = [
   "Assistenza a intervento chirurgico",
 ] as const;
 
+// Documenti che attestano la regolarità/professionalità dell'infermiere.
+// LICENSE/INSURANCE/ID sono sensibili: pubblicamente si mostra solo un badge
+// "verificato", mai il file. CERTIFICATION è pensato per essere consultato
+// dal cliente (corsi, attestati) una volta verificato.
+export const DOCUMENT_TYPES = ["LICENSE", "INSURANCE", "ID", "CERTIFICATION", "OTHER"] as const;
+export type DocumentType = (typeof DOCUMENT_TYPES)[number];
+
+export const DOCUMENT_STATUS = ["PENDING", "VERIFIED", "REJECTED"] as const;
+export type DocumentStatus = (typeof DOCUMENT_STATUS)[number];
+
 export const BID_STATUS = ["ACTIVE", "OUTBID", "WINNING", "WITHDRAWN"] as const;
 export type BidStatus = (typeof BID_STATUS)[number];
 

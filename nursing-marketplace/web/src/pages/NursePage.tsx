@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { Auction, NurseProfile, NurseService } from "../api/types";
+import type { Auction, NurseProfile, NurseService, PublicVerification } from "../api/types";
 import { CARE_SETTING_LABELS, SHIFT_TYPE_LABELS } from "../api/types";
 import { Avatar } from "../components/Avatar";
 import { AuctionTypeBadge, PriceBadge } from "../components/Badges";
@@ -14,13 +14,23 @@ import {
   ClockIcon,
   SyringeIcon,
   CheckCircleIcon,
+  ShieldCheckIcon,
+  ShieldIcon,
+  FileTextIcon,
 } from "../components/Icon";
+
+const VERIFICATION_ROWS: { key: keyof Omit<PublicVerification, "certifications">; label: string }[] = [
+  { key: "license", label: "Iscrizione Albo/OPI" },
+  { key: "insurance", label: "Assicurazione RC professionale" },
+  { key: "identity", label: "Identità" },
+];
 
 export function NursePage() {
   const { id } = useParams<{ id: string }>();
   const [nurse, setNurse] = useState<NurseProfile | null>(null);
   const [services, setServices] = useState<NurseService[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [verification, setVerification] = useState<PublicVerification | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,6 +38,7 @@ export function NursePage() {
     api.get<NurseProfile>(`/nurses/${id}`).then(setNurse).catch((err) => setError(err.message));
     api.get<NurseService[]>(`/nurses/${id}/services`).then(setServices).catch(() => {});
     api.get<Auction[]>(`/auctions?nurseId=${id}`).then(setAuctions).catch(() => {});
+    api.get<PublicVerification>(`/nurses/${id}/verification`).then(setVerification).catch(() => {});
   }, [id]);
 
   if (error) return <p className="error">{error}</p>;
@@ -117,6 +128,51 @@ export function NursePage() {
               : "tutti"}
           </p>
         </div>
+      </div>
+
+      <div className="card verification-card">
+        <h3>
+          <ShieldCheckIcon size={18} /> Verifiche e certificazioni
+        </h3>
+        <p className="muted small">
+          Documenti dichiarati dal professionista e controllati dal team Bay Nurse per garantire che sia
+          davvero chi dice di essere.
+        </p>
+        <div className="verification-badges">
+          {VERIFICATION_ROWS.map(({ key, label }) => {
+            const verified = verification?.[key] ?? false;
+            return (
+              <span key={key} className={`verification-badge ${verified ? "verified" : "unverified"}`}>
+                {verified ? <ShieldCheckIcon size={15} /> : <ShieldIcon size={15} />}
+                {label}
+                <em>{verified ? "Verificato" : "Non verificato"}</em>
+              </span>
+            );
+          })}
+        </div>
+
+        {verification && verification.certifications.length > 0 && (
+          <>
+            <h3>Certificazioni consultabili</h3>
+            <div className="certification-list">
+              {verification.certifications.map((doc) => (
+                <a
+                  key={doc.id}
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="certification-row"
+                >
+                  <FileTextIcon size={16} />
+                  <span>{doc.label}</span>
+                  <span className={`status-pill status-${doc.status.toLowerCase()}`}>
+                    {doc.status === "VERIFIED" ? "Verificato" : doc.status === "PENDING" ? "In attesa" : "Rifiutato"}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <h2>
