@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+*.tsbuildinfo
+web/vite.config.js
+web/vite.config.d.ts
+
+# SQLite dev database and migration lock generated locally
+server/prisma/dev.db
+server/prisma/dev.db-journal
