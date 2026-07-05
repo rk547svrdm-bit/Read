@@ -1,4 +1,4 @@
-# Nursing Marketplace — API
+# Bay Nurse — API
 
 Backend Express + TypeScript + Prisma (SQLite di default).
 
@@ -7,7 +7,7 @@ Backend Express + TypeScript + Prisma (SQLite di default).
 ```bash
 npm install
 cp .env.example .env
-npx prisma migrate dev --name init   # crea/aggiorna dev.db
+npx prisma migrate dev              # crea/aggiorna dev.db
 npm run seed                          # popola dati demo
 npm run dev                           # avvia su http://localhost:4000
 ```
@@ -33,11 +33,13 @@ npm test
 | GET | `/nurses/:id` | – | Profilo pubblico infermiere |
 | GET/PUT | `/nurses/me` | NURSE | Bio/CV e requisiti del proprio profilo |
 | GET/PUT | `/clients/me` | CLIENT | Profilo cliente |
-| GET | `/listings` | – | Inserzioni pubblicate (filtri: city, careSetting, shiftType) |
-| GET | `/listings/me` | NURSE | Le proprie inserzioni |
-| POST | `/listings` | NURSE | Crea inserzione in bozza |
-| POST | `/listings/:id/publish` | NURSE | Pubblica e apre l'asta |
-| GET | `/auctions` | – | Aste attualmente aperte |
+| GET | `/nurses/:id/services` | – | Catalogo prestazioni pubblico di un infermiere |
+| GET | `/nurses/me/services` | NURSE | Il proprio catalogo prestazioni |
+| POST | `/nurses/me/services` | NURSE | Aggiunge una prestazione (nome + paga minima, a discrezione) |
+| PUT | `/nurses/me/services/:serviceId` | NURSE | Modifica una prestazione |
+| DELETE | `/nurses/me/services/:serviceId` | NURSE | Elimina una prestazione (se senza aste aperte) |
+| GET | `/auctions` | – | Aste aperte (filtri: nurseId, type=HOURLY\|SERVICE) |
+| POST | `/auctions` | NURSE | Apre un'asta sul proprio profilo: oraria o su una prestazione del catalogo |
 | GET | `/auctions/:id` | – | Dettaglio asta con offerte |
 | POST | `/auctions/:id/bids` | CLIENT | Fai un'offerta |
 | GET | `/auctions/:id/bids` | – | Storico offerte |

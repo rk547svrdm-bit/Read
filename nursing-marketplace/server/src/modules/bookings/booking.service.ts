@@ -8,14 +8,14 @@ export async function getMyBookings(userId: string, role: Role) {
     if (!nurse) throw AppError.notFound("Profilo infermiere non trovato");
     return prisma.booking.findMany({
       where: { nurseId: nurse.id },
-      include: { auction: { include: { listing: true } } },
+      include: { auction: { include: { nurse: true, service: true } } },
       orderBy: { createdAt: "desc" },
     });
   }
 
   return prisma.booking.findMany({
     where: { clientId: userId },
-    include: { auction: { include: { listing: true } } },
+    include: { auction: { include: { nurse: true, service: true } } },
     orderBy: { createdAt: "desc" },
   });
 }
@@ -23,7 +23,7 @@ export async function getMyBookings(userId: string, role: Role) {
 export async function getBookingById(id: string) {
   const booking = await prisma.booking.findUnique({
     where: { id },
-    include: { auction: { include: { listing: true } }, reviews: true },
+    include: { auction: { include: { nurse: true, service: true } }, reviews: true },
   });
   if (!booking) throw AppError.notFound("Prenotazione non trovata");
   return booking;

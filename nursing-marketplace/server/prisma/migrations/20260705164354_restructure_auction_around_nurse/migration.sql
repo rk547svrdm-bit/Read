@@ -15,6 +15,7 @@ CREATE TABLE "NurseProfile" (
     "fullName" TEXT NOT NULL,
     "headline" TEXT,
     "bio" TEXT NOT NULL,
+    "photoUrl" TEXT,
     "licenseNumber" TEXT,
     "yearsExperience" INTEGER NOT NULL DEFAULT 0,
     "skillsJson" TEXT NOT NULL DEFAULT '[]',
@@ -47,39 +48,35 @@ CREATE TABLE "ClientProfile" (
 );
 
 -- CreateTable
-CREATE TABLE "Listing" (
+CREATE TABLE "NurseService" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "nurseId" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL,
-    "careSetting" TEXT NOT NULL,
-    "shiftType" TEXT NOT NULL,
-    "isHoliday" BOOLEAN NOT NULL DEFAULT false,
-    "isWeekend" BOOLEAN NOT NULL DEFAULT false,
-    "serviceDate" DATETIME NOT NULL,
-    "durationHours" REAL NOT NULL,
-    "city" TEXT NOT NULL,
-    "startingPrice" REAL NOT NULL,
-    "status" TEXT NOT NULL DEFAULT 'DRAFT',
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "minPrice" REAL NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Listing_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "NurseProfile" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "NurseService_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "NurseProfile" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Auction" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "listingId" TEXT NOT NULL,
+    "nurseId" TEXT NOT NULL,
+    "type" TEXT NOT NULL,
+    "serviceId" TEXT,
     "startAt" DATETIME NOT NULL,
     "endAt" DATETIME NOT NULL,
     "minIncrement" REAL NOT NULL DEFAULT 1,
     "startingPrice" REAL NOT NULL,
     "currentPrice" REAL NOT NULL,
     "currentHighestBidId" TEXT,
-    "status" TEXT NOT NULL DEFAULT 'SCHEDULED',
+    "status" TEXT NOT NULL DEFAULT 'OPEN',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Auction_listingId_fkey" FOREIGN KEY ("listingId") REFERENCES "Listing" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Auction_nurseId_fkey" FOREIGN KEY ("nurseId") REFERENCES "NurseProfile" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Auction_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "NurseService" ("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -134,13 +131,13 @@ CREATE INDEX "NurseProfile_city_idx" ON "NurseProfile"("city");
 CREATE UNIQUE INDEX "ClientProfile_userId_key" ON "ClientProfile"("userId");
 
 -- CreateIndex
-CREATE INDEX "Listing_city_status_idx" ON "Listing"("city", "status");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Auction_listingId_key" ON "Auction"("listingId");
+CREATE INDEX "NurseService_nurseId_idx" ON "NurseService"("nurseId");
 
 -- CreateIndex
 CREATE INDEX "Auction_status_endAt_idx" ON "Auction"("status", "endAt");
+
+-- CreateIndex
+CREATE INDEX "Auction_nurseId_idx" ON "Auction"("nurseId");
 
 -- CreateIndex
 CREATE INDEX "Bid_auctionId_idx" ON "Bid"("auctionId");

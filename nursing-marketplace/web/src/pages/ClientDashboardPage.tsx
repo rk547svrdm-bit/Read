@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client";
+import { Avatar } from "../components/Avatar";
+import { AuctionTypeBadge } from "../components/Badges";
+import type { AuctionType, NurseProfile, NurseService } from "../api/types";
 
 interface BookingWithAuction {
   id: string;
@@ -8,7 +11,9 @@ interface BookingWithAuction {
   status: string;
   auction: {
     id: string;
-    listing: { title: string; city: string; serviceDate: string };
+    type: AuctionType;
+    nurse: NurseProfile;
+    service: NurseService | null;
   };
 }
 
@@ -28,38 +33,31 @@ export function ClientDashboardPage() {
       <h1>Le mie prenotazioni</h1>
       <p>
         Qui trovi le aste che hai vinto. Sfoglia la <Link to="/">directory</Link> o le{" "}
-        <Link to="/listings">aste aperte</Link> per farne di nuove.
+        <Link to="/auctions">aste aperte</Link> per farne di nuove.
       </p>
 
       {error && <p className="error">{error}</p>}
 
-      <table className="bids-table">
-        <thead>
-          <tr>
-            <th>Servizio</th>
-            <th>Città</th>
-            <th>Data</th>
-            <th>Prezzo aggiudicato</th>
-            <th>Stato</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bookings.map((b) => (
-            <tr key={b.id}>
-              <td>{b.auction.listing.title}</td>
-              <td>{b.auction.listing.city}</td>
-              <td>{new Date(b.auction.listing.serviceDate).toLocaleString("it-IT")}</td>
-              <td>{b.finalPrice} €/h</td>
-              <td>{b.status}</td>
-            </tr>
-          ))}
-          {bookings.length === 0 && (
-            <tr>
-              <td colSpan={5}>Nessuna prenotazione ancora.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <div className="grid">
+        {bookings.map((b) => (
+          <div key={b.id} className="card booking-card">
+            <Link to={`/nurses/${b.auction.nurse.id}`} className="booking-card-nurse">
+              <Avatar photoUrl={b.auction.nurse.photoUrl} name={b.auction.nurse.fullName} size={48} />
+              <div>
+                <strong>{b.auction.nurse.fullName}</strong>
+                <div className="muted small">{b.auction.nurse.city}</div>
+              </div>
+            </Link>
+            <AuctionTypeBadge type={b.auction.type} />
+            <p>{b.auction.type === "HOURLY" ? "Tariffa oraria" : b.auction.service?.name}</p>
+            <div className="booking-card-footer">
+              <span className="price-badge price-badge-hourly">{b.finalPrice} €</span>
+              <span className={`status-pill status-${b.status.toLowerCase()}`}>{b.status}</span>
+            </div>
+          </div>
+        ))}
+        {bookings.length === 0 && <p>Nessuna prenotazione ancora.</p>}
+      </div>
     </div>
   );
 }

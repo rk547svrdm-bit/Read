@@ -13,6 +13,11 @@
 // Liste (competenze, specializzazioni, turni preferiti, ambienti
 // accettati...) sono salvate come stringa JSON e (de)serializzate nel
 // service layer (vedi src/utils/json.ts), per la stessa ragione.
+//
+// L'asta riguarda sempre ed esclusivamente il professionista (NurseProfile),
+// non una specifica data/turno: può essere "oraria" (sulla tariffa/h) oppure
+// "a prestazione" (su una voce del suo catalogo NurseService), a scelta del
+// professionista che la apre.
 
 generator client {
   provider = "prisma-client-js"
@@ -46,6 +51,7 @@ model NurseProfile {
   fullName            String
   headline            String?
   bio                 String
+  photoUrl            String?
   licenseNumber       String?
   yearsExperience     Int      @default(0)
 
@@ -56,7 +62,8 @@ model NurseProfile {
   city                String
   travelRadiusKm      Int      @default(10)
 
-  // Requisiti richiesti per prendere in considerazione un'offerta di lavoro
+  // Preferenze generali mostrate sul profilo (informative, filtrabili in
+  // directory); non condizionano più la creazione di una singola asta.
   minHourlyRate       Float
   acceptsHolidays     Boolean  @default(false)
   acceptsWeekends     Boolean  @default(false)
@@ -68,7 +75,8 @@ model NurseProfile {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
-  listings            Listing[]
+  services            NurseService[]
+  auctions            Auction[]
 
   @@index([city])
 }
@@ -86,38 +94,36 @@ model ClientProfile {
   updatedAt    DateTime @updatedAt
 }
 
-model Listing {
-  id            String   @id @default(cuid())
-  nurseId       String
-  nurse         NurseProfile @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+// Catalogo delle prestazioni offerte dal professionista, a sua discrezione
+// (es. Iniezione, Prelievo, ECG, Intramuscolo, ma anche voci custom come
+// Impianto PICC o assistenza a intervento chirurgico), ciascuna con la
+// propria paga minima.
+model NurseService {
+  id          String   @id @default(cuid())
+  nurseId     String
+  nurse       NurseProfile @relation(fields: [nurseId], references: [id], onDelete: Cascade)
 
-  title         String
-  description   String
+  name        String
+  description String?
+  minPrice    Float
+  isActive    Boolean  @default(true)
 
-  careSetting   String   // vedi CARE_SETTINGS
-  shiftType     String   // vedi SHIFT_TYPES
-  isHoliday     Boolean  @default(false)
-  isWeekend     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  serviceDate   DateTime
-  durationHours Float
-  city          String
+  auctions    Auction[]
 
-  startingPrice Float
-  status        String   @default("DRAFT") // vedi LISTING_STATUS
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  auction       Auction?
-
-  @@index([city, status])
+  @@index([nurseId])
 }
 
 model Auction {
   id                  String   @id @default(cuid())
-  listingId           String   @unique
-  listing             Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  nurseId             String
+  nurse               NurseProfile  @relation(fields: [nurseId], references: [id], onDelete: Cascade)
+
+  type                String   // HOURLY | SERVICE — vedi AUCTION_TYPES
+  serviceId           String?
+  service             NurseService? @relation(fields: [serviceId], references: [id])
 
   startAt             DateTime
   endAt               DateTime
@@ -126,7 +132,7 @@ model Auction {
   currentPrice        Float
   currentHighestBidId String?
 
-  status              String   @default("SCHEDULED") // vedi AUCTION_STATUS
+  status              String   @default("OPEN") // vedi AUCTION_STATUS
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -135,6 +141,7 @@ model Auction {
   booking             Booking?
 
   @@index([status, endAt])
+  @@index([nurseId])
 }
 
 model Bid {

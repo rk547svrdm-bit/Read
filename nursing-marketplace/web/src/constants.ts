@@ -8,3 +8,18 @@ export const SHIFT_TYPE_OPTIONS: { value: ShiftType; label: string }[] = (
 export const CARE_SETTINGS_OPTIONS: { value: CareSetting; label: string }[] = (
   Object.keys(CARE_SETTING_LABELS) as CareSetting[]
 ).map((value) => ({ value, label: CARE_SETTING_LABELS[value] }));
+
+// Suggerimenti rapidi di prestazioni comuni; l'infermiere può comunque
+// aggiungerne di personalizzate con nome e paga minima a sua discrezione.
+export const SERVICE_SUGGESTIONS = [
+  "Iniezione",
+  "Prelievo ematico",
+  "Elettrocardiogramma (ECG)",
+  "Intramuscolo",
+  "Flebo / terapia infusionale",
+  "Medicazione semplice",
+  "Medicazione avanzata",
+  "Cateterismo",
+  "Impianto PICC",
+  "Assistenza a intervento chirurgico",
+];

@@ -1,4 +1,4 @@
-# Nursing Marketplace — Web
+# Bay Nurse — Web
 
 Client React + TypeScript (Vite) per l'API del marketplace.
 

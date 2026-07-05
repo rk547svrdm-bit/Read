@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { Navbar } from "./components/Navbar";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { HomePage } from "./pages/HomePage";
-import { ListingsPage } from "./pages/ListingsPage";
+import { AuctionsPage } from "./pages/AuctionsPage";
 import { NursePage } from "./pages/NursePage";
 import { AuctionPage } from "./pages/AuctionPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -17,9 +17,9 @@ export function App() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/listings" element={<ListingsPage />} />
+          <Route path="/auctions" element={<AuctionsPage />} />
           <Route path="/nurses/:id" element={<NursePage />} />
-          <Route path="/listings/:id" element={<AuctionPage />} />
+          <Route path="/auctions/:id" element={<AuctionPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route

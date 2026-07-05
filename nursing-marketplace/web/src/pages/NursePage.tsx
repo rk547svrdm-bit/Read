@@ -1,87 +1,151 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { NurseProfile, Listing } from "../api/types";
+import type { Auction, NurseProfile, NurseService } from "../api/types";
 import { CARE_SETTING_LABELS, SHIFT_TYPE_LABELS } from "../api/types";
-import { ListingCard } from "../components/ListingCard";
+import { Avatar } from "../components/Avatar";
+import { AuctionTypeBadge, PriceBadge } from "../components/Badges";
+import { CountdownTimer } from "../components/CountdownTimer";
+import {
+  MapPinIcon,
+  CalendarIcon,
+  SunIcon,
+  MoonIcon,
+  ClockIcon,
+  SyringeIcon,
+  CheckCircleIcon,
+} from "../components/Icon";
 
 export function NursePage() {
   const { id } = useParams<{ id: string }>();
   const [nurse, setNurse] = useState<NurseProfile | null>(null);
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [services, setServices] = useState<NurseService[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
-    api
-      .get<NurseProfile>(`/nurses/${id}`)
-      .then(setNurse)
-      .catch((err) => setError(err.message));
-    api
-      .get<Listing[]>("/listings")
-      .then((all) => setListings(all.filter((l) => l.nurseId === id)))
-      .catch(() => {});
+    api.get<NurseProfile>(`/nurses/${id}`).then(setNurse).catch((err) => setError(err.message));
+    api.get<NurseService[]>(`/nurses/${id}/services`).then(setServices).catch(() => {});
+    api.get<Auction[]>(`/auctions?nurseId=${id}`).then(setAuctions).catch(() => {});
   }, [id]);
 
   if (error) return <p className="error">{error}</p>;
   if (!nurse) return <p>Caricamento…</p>;
 
+  const hourlyAuction = auctions.find((a) => a.type === "HOURLY");
+  const serviceAuctionByServiceId = new Map(
+    auctions.filter((a) => a.type === "SERVICE" && a.serviceId).map((a) => [a.serviceId as string, a])
+  );
+
   return (
     <div className="page">
-      <div className="card profile-card">
-        <div className="nurse-card-header">
+      <div className="card profile-header">
+        <Avatar photoUrl={nurse.photoUrl} name={nurse.fullName} size={120} ring />
+        <div className="profile-header-info">
           <h1>{nurse.fullName}</h1>
-          <span className="badge">{nurse.city}</span>
-        </div>
-        {nurse.headline && <p className="nurse-headline">{nurse.headline}</p>}
-        <p>{nurse.bio}</p>
-
-        <h3>Competenze</h3>
-        <div className="tag-list">
-          {nurse.skills.map((s) => (
-            <span key={s} className="tag">
-              {s}
+          {nurse.headline && <p className="nurse-headline">{nurse.headline}</p>}
+          <div className="icon-row">
+            <span>
+              <MapPinIcon size={16} /> {nurse.city}
             </span>
-          ))}
-        </div>
-
-        <h3>Specializzazioni</h3>
-        <div className="tag-list">
-          {nurse.specializations.map((s) => (
-            <span key={s} className="tag">
-              {s}
+            <span>
+              <CheckCircleIcon size={16} /> {nurse.yearsExperience} anni di esperienza
             </span>
-          ))}
+          </div>
+          {hourlyAuction && (
+            <Link to={`/auctions/${hourlyAuction.id}`} className="hourly-cta">
+              <ClockIcon size={16} />
+              Asta oraria aperta — attuale {hourlyAuction.currentPrice} €/h
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <div className="profile-grid">
+        <div className="card">
+          <h3>Chi sono</h3>
+          <p className="bio-text">{nurse.bio || "Nessuna descrizione inserita."}</p>
+
+          <h3>Competenze</h3>
+          <div className="tag-list">
+            {nurse.skills.map((s) => (
+              <span key={s} className="tag">
+                {s}
+              </span>
+            ))}
+            {nurse.skills.length === 0 && <span className="muted">—</span>}
+          </div>
+
+          <h3>Specializzazioni</h3>
+          <div className="tag-list">
+            {nurse.specializations.map((s) => (
+              <span key={s} className="tag tag-alt">
+                {s}
+              </span>
+            ))}
+            {nurse.specializations.length === 0 && <span className="muted">—</span>}
+          </div>
         </div>
 
-        <h3>Condizioni richieste</h3>
-        <ul className="requirements-list">
-          <li>Paga oraria minima: {nurse.minHourlyRate} €/h</li>
-          <li>Festivi: {nurse.acceptsHolidays ? "disponibile" : "non disponibile"}</li>
-          <li>Weekend: {nurse.acceptsWeekends ? "disponibile" : "non disponibile"}</li>
-          <li>Turni notturni: {nurse.acceptsNights ? "disponibile" : "non disponibile"}</li>
-          <li>
-            Turni accettati:{" "}
+        <div className="card">
+          <h3>Disponibilità generale</h3>
+          <ul className="requirements-list">
+            <li>
+              <ClockIcon size={16} /> Tariffa oraria minima: <strong>{nurse.minHourlyRate} €/h</strong>
+            </li>
+            <li>
+              <SunIcon size={16} /> Festivi: {nurse.acceptsHolidays ? "disponibile" : "non disponibile"}
+            </li>
+            <li>
+              <CalendarIcon size={16} /> Weekend: {nurse.acceptsWeekends ? "disponibile" : "non disponibile"}
+            </li>
+            <li>
+              <MoonIcon size={16} /> Turni notturni: {nurse.acceptsNights ? "disponibile" : "non disponibile"}
+            </li>
+          </ul>
+          <p className="muted small">
+            Turni:{" "}
             {nurse.preferredShifts.length > 0
               ? nurse.preferredShifts.map((s) => SHIFT_TYPE_LABELS[s]).join(", ")
               : "tutti"}
-          </li>
-          <li>
-            Ambienti accettati:{" "}
+          </p>
+          <p className="muted small">
+            Ambienti:{" "}
             {nurse.careSettings.length > 0
               ? nurse.careSettings.map((s) => CARE_SETTING_LABELS[s]).join(", ")
               : "tutti"}
-          </li>
-        </ul>
+          </p>
+        </div>
       </div>
 
-      <h2>Disponibilità pubblicate</h2>
+      <h2>
+        <SyringeIcon size={20} /> Prestazioni offerte
+      </h2>
       <div className="grid">
-        {listings.map((l) => (
-          <ListingCard key={l.id} listing={l} />
-        ))}
-        {listings.length === 0 && <p>Nessuna disponibilità pubblicata al momento.</p>}
+        {services.map((service) => {
+          const auction = serviceAuctionByServiceId.get(service.id);
+          return (
+            <div key={service.id} className="card service-card">
+              <h3>{service.name}</h3>
+              {service.description && <p className="muted small">{service.description}</p>}
+              <PriceBadge amount={service.minPrice} type="SERVICE" suffix=" min" />
+              {auction ? (
+                <Link to={`/auctions/${auction.id}`} className="service-card-cta">
+                  Asta aperta — {auction.currentPrice} € <CountdownTimer endAt={auction.endAt} />
+                </Link>
+              ) : (
+                <span className="muted small">Nessuna asta attiva</span>
+              )}
+            </div>
+          );
+        })}
+        {services.length === 0 && <p>Nessuna prestazione pubblicata al momento.</p>}
       </div>
+
+      {auctions.filter((a) => a.type === "SERVICE").length === 0 && !hourlyAuction && (
+        <p className="muted">Questo professionista non ha aste aperte in questo momento.</p>
+      )}
     </div>
   );
 }

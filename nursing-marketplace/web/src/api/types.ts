@@ -36,6 +36,7 @@ export interface NurseProfile {
   fullName: string;
   headline: string | null;
   bio: string;
+  photoUrl: string | null;
   licenseNumber: string | null;
   yearsExperience: number;
   skills: string[];
@@ -52,33 +53,32 @@ export interface NurseProfile {
   isActive: boolean;
 }
 
+export interface NurseService {
+  id: string;
+  nurseId: string;
+  name: string;
+  description: string | null;
+  minPrice: number;
+  isActive: boolean;
+}
+
+export type AuctionType = "HOURLY" | "SERVICE";
+export type AuctionStatus = "OPEN" | "CLOSED" | "AWARDED" | "CANCELLED";
+
 export interface Auction {
   id: string;
-  listingId: string;
+  nurseId: string;
+  type: AuctionType;
+  serviceId: string | null;
   startAt: string;
   endAt: string;
   minIncrement: number;
   startingPrice: number;
   currentPrice: number;
   currentHighestBidId: string | null;
-  status: "SCHEDULED" | "OPEN" | "CLOSED" | "AWARDED" | "CANCELLED";
-}
-
-export interface Listing {
-  id: string;
-  nurseId: string;
-  title: string;
-  description: string;
-  careSetting: CareSetting;
-  shiftType: ShiftType;
-  isHoliday: boolean;
-  isWeekend: boolean;
-  serviceDate: string;
-  durationHours: number;
-  city: string;
-  startingPrice: number;
-  status: "DRAFT" | "PUBLISHED" | "CLOSED" | "CANCELLED";
-  auction?: Auction | null;
+  status: AuctionStatus;
+  nurse?: NurseProfile;
+  service?: NurseService | null;
 }
 
 export interface Bid {

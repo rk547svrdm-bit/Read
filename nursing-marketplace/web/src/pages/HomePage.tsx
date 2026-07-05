@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client";
 import type { NurseProfile } from "../api/types";
 import { NurseCard } from "../components/NurseCard";
+import { MapPinIcon } from "../components/Icon";
 
 export function HomePage() {
   const [nurses, setNurses] = useState<NurseProfile[]>([]);
@@ -25,14 +26,17 @@ export function HomePage() {
         <h1>Trova l'infermiere giusto per te</h1>
         <p>
           Sfoglia i profili dei professionisti disponibili e partecipa alle aste per
-          aggiudicarti la prestazione alle condizioni migliori.
+          aggiudicarti la loro prestazione alle condizioni migliori.
         </p>
-        <input
-          className="search-input"
-          placeholder="Filtra per città (es. Torino)"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-        />
+        <div className="search-bar">
+          <MapPinIcon size={18} />
+          <input
+            className="search-input"
+            placeholder="Filtra per città (es. Torino)"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+          />
+        </div>
       </section>
 
       {loading && <p>Caricamento…</p>}

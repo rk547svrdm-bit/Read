@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, ApiError } from "../api/client";
-import type { CareSetting, Listing, NurseProfile, ShiftType } from "../api/types";
-import { CARE_SETTINGS_OPTIONS, SHIFT_TYPE_OPTIONS } from "../constants";
-import { ListingCard } from "../components/ListingCard";
+import type { Auction, CareSetting, NurseProfile, NurseService, ShiftType } from "../api/types";
+import { CARE_SETTINGS_OPTIONS, SERVICE_SUGGESTIONS, SHIFT_TYPE_OPTIONS } from "../constants";
+import { Avatar } from "../components/Avatar";
+import { AuctionTypeBadge, AuctionStatusBadge, PriceBadge } from "../components/Badges";
+import { CountdownTimer } from "../components/CountdownTimer";
+import { ClockIcon, PlusIcon, SyringeIcon, TrashIcon } from "../components/Icon";
 
 function toCsv(values: string[]): string {
   return values.join(", ");
@@ -17,7 +21,8 @@ function fromCsv(value: string): string[] {
 
 export function NurseDashboardPage() {
   const [profile, setProfile] = useState<NurseProfile | null>(null);
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [services, setServices] = useState<NurseService[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -26,6 +31,7 @@ export function NurseDashboardPage() {
     fullName: "",
     headline: "",
     bio: "",
+    photoUrl: "",
     city: "",
     yearsExperience: 0,
     minHourlyRate: 0,
@@ -47,6 +53,7 @@ export function NurseDashboardPage() {
         fullName: p.fullName,
         headline: p.headline ?? "",
         bio: p.bio,
+        photoUrl: p.photoUrl ?? "",
         city: p.city,
         yearsExperience: p.yearsExperience,
         minHourlyRate: p.minHourlyRate,
@@ -59,11 +66,15 @@ export function NurseDashboardPage() {
         preferredShifts: p.preferredShifts,
         careSettings: p.careSettings,
       });
+      const [myServices, myAuctions] = await Promise.all([
+        api.get<NurseService[]>("/nurses/me/services"),
+        api.get<Auction[]>(`/auctions?nurseId=${p.id}&status=OPEN`),
+      ]);
+      setServices(myServices);
+      setAuctions(myAuctions);
     } catch {
       // profilo non ancora inizializzato: si parte da un form vuoto
     }
-    const my = await api.get<Listing[]>("/listings/me");
-    setListings(my);
   }
 
   useEffect(() => {
@@ -98,6 +109,7 @@ export function NurseDashboardPage() {
         fullName: form.fullName,
         headline: form.headline || undefined,
         bio: form.bio,
+        photoUrl: form.photoUrl || undefined,
         city: form.city,
         yearsExperience: Number(form.yearsExperience),
         minHourlyRate: Number(form.minHourlyRate),
@@ -119,15 +131,47 @@ export function NurseDashboardPage() {
     }
   }
 
+  async function openHourlyAuction() {
+    setError(null);
+    try {
+      await api.post("/auctions", { type: "HOURLY" });
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Errore imprevisto");
+    }
+  }
+
+  async function openServiceAuction(serviceId: string) {
+    setError(null);
+    try {
+      await api.post("/auctions", { type: "SERVICE", serviceId });
+      await loadAll();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Errore imprevisto");
+    }
+  }
+
+  const hourlyAuctionOpen = auctions.some((a) => a.type === "HOURLY");
+  const serviceIdsWithOpenAuction = new Set(auctions.filter((a) => a.type === "SERVICE").map((a) => a.serviceId));
+
   return (
     <div className="page">
       <h1>Il mio profilo</h1>
-      <p>
-        Qui definisci la tua bio/CV e i requisiti minimi che devono avere le offerte di lavoro
-        perché tu le prenda in considerazione.
-      </p>
 
       <form className="card profile-form" onSubmit={handleSaveProfile}>
+        <div className="photo-edit-row">
+          <Avatar photoUrl={form.photoUrl || null} name={form.fullName || "?"} size={88} ring />
+          <div className="photo-edit-input">
+            <label htmlFor="photoUrl">URL foto profilo</label>
+            <input
+              id="photoUrl"
+              placeholder="https://…"
+              value={form.photoUrl}
+              onChange={(e) => setForm({ ...form, photoUrl: e.target.value })}
+            />
+          </div>
+        </div>
+
         <label htmlFor="fullName">Nome completo</label>
         <input
           id="fullName"
@@ -146,7 +190,7 @@ export function NurseDashboardPage() {
         <label htmlFor="bio">Bio / CV</label>
         <textarea
           id="bio"
-          rows={5}
+          rows={4}
           value={form.bio}
           onChange={(e) => setForm({ ...form, bio: e.target.value })}
         />
@@ -173,16 +217,9 @@ export function NurseDashboardPage() {
           onChange={(e) => setForm({ ...form, specializations: e.target.value })}
         />
 
-        <label htmlFor="certifications">Certificazioni (separate da virgola)</label>
-        <input
-          id="certifications"
-          value={form.certifications}
-          onChange={(e) => setForm({ ...form, certifications: e.target.value })}
-        />
+        <h3>Disponibilità generale</h3>
 
-        <h3>Requisiti richiesti per considerare un'offerta</h3>
-
-        <label htmlFor="minHourlyRate">Paga oraria minima (€/h)</label>
+        <label htmlFor="minHourlyRate">Tariffa oraria minima (€/h)</label>
         <input
           id="minHourlyRate"
           type="number"
@@ -200,7 +237,7 @@ export function NurseDashboardPage() {
               checked={form.acceptsHolidays}
               onChange={(e) => setForm({ ...form, acceptsHolidays: e.target.checked })}
             />
-            Disponibile nei festivi
+            Festivi
           </label>
           <label>
             <input
@@ -208,7 +245,7 @@ export function NurseDashboardPage() {
               checked={form.acceptsWeekends}
               onChange={(e) => setForm({ ...form, acceptsWeekends: e.target.checked })}
             />
-            Disponibile nel weekend
+            Weekend
           </label>
           <label>
             <input
@@ -216,11 +253,10 @@ export function NurseDashboardPage() {
               checked={form.acceptsNights}
               onChange={(e) => setForm({ ...form, acceptsNights: e.target.checked })}
             />
-            Disponibile per turni notturni
+            Turni notturni
           </label>
         </div>
 
-        <p>Turni accettati (nessuna selezione = tutti)</p>
         <div className="checkbox-row">
           {SHIFT_TYPE_OPTIONS.map(({ value, label }) => (
             <label key={value}>
@@ -234,7 +270,6 @@ export function NurseDashboardPage() {
           ))}
         </div>
 
-        <p>Ambienti di lavoro accettati (nessuna selezione = tutti)</p>
         <div className="checkbox-row">
           {CARE_SETTINGS_OPTIONS.map(({ value, label }) => (
             <label key={value}>
@@ -250,57 +285,80 @@ export function NurseDashboardPage() {
 
         {error && <p className="error">{error}</p>}
         {success && <p className="success">{success}</p>}
-        <button type="submit" disabled={saving}>
+        <button type="submit" className="btn-primary" disabled={saving}>
           {saving ? "Salvataggio…" : "Salva profilo"}
         </button>
       </form>
 
-      {profile && <CreateListingForm onCreated={loadAll} />}
+      {profile && (
+        <>
+          <div className="card auction-manager-card">
+            <div className="auction-manager-row">
+              <div>
+                <h3>
+                  <ClockIcon size={18} /> Asta oraria
+                </h3>
+                <p className="muted small">Tariffa minima: {profile.minHourlyRate} €/h</p>
+              </div>
+              {hourlyAuctionOpen ? (
+                <span className="status-pill status-open">Asta già aperta</span>
+              ) : (
+                <button className="btn-primary" onClick={openHourlyAuction}>
+                  Apri asta oraria
+                </button>
+              )}
+            </div>
+            {auctions
+              .filter((a) => a.type === "HOURLY")
+              .map((a) => (
+                <Link key={a.id} to={`/auctions/${a.id}`} className="auction-manager-item">
+                  <PriceBadge amount={a.currentPrice} type="HOURLY" />
+                  <CountdownTimer endAt={a.endAt} />
+                  <AuctionStatusBadge status={a.status} />
+                </Link>
+              ))}
+          </div>
 
-      <h2>Le mie inserzioni</h2>
-      <div className="grid">
-        {listings.map((l) => (
-          <ListingCard key={l.id} listing={l} />
-        ))}
-        {listings.length === 0 && <p>Non hai ancora pubblicato inserzioni.</p>}
-      </div>
+          <ServicesManager
+            services={services}
+            openServiceAuction={openServiceAuction}
+            serviceIdsWithOpenAuction={serviceIdsWithOpenAuction}
+            auctions={auctions}
+            onChanged={loadAll}
+          />
+        </>
+      )}
     </div>
   );
 }
 
-function CreateListingForm({ onCreated }: { onCreated: () => void }) {
+function ServicesManager({
+  services,
+  openServiceAuction,
+  serviceIdsWithOpenAuction,
+  auctions,
+  onChanged,
+}: {
+  services: NurseService[];
+  openServiceAuction: (serviceId: string) => void;
+  serviceIdsWithOpenAuction: Set<string | null>;
+  auctions: Auction[];
+  onChanged: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [minPrice, setMinPrice] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    careSetting: CARE_SETTINGS_OPTIONS[0].value,
-    shiftType: SHIFT_TYPE_OPTIONS[0].value,
-    isHoliday: false,
-    isWeekend: false,
-    serviceDate: "",
-    durationHours: 2,
-    city: "",
-    startingPrice: "",
-  });
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setSubmitting(true);
     try {
-      const listing = await api.post<{ id: string }>("/listings", {
-        ...form,
-        durationHours: Number(form.durationHours),
-        startingPrice: form.startingPrice ? Number(form.startingPrice) : undefined,
-        serviceDate: new Date(form.serviceDate).toISOString(),
-      });
-      await api.post(`/listings/${listing.id}/publish`);
-      setSuccess("Inserzione pubblicata! L'asta è ora aperta alle offerte.");
-      setForm({ ...form, title: "", description: "" });
-      onCreated();
+      await api.post("/nurses/me/services", { name, minPrice: Number(minPrice) });
+      setName("");
+      setMinPrice("");
+      onChanged();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Errore imprevisto");
     } finally {
@@ -308,108 +366,83 @@ function CreateListingForm({ onCreated }: { onCreated: () => void }) {
     }
   }
 
+  async function handleDelete(id: string) {
+    setError(null);
+    try {
+      await api.delete(`/nurses/me/services/${id}`);
+      onChanged();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Errore imprevisto");
+    }
+  }
+
+  const auctionByServiceId = new Map(
+    auctions.filter((a) => a.type === "SERVICE" && a.serviceId).map((a) => [a.serviceId as string, a])
+  );
+
   return (
-    <form className="card listing-form" onSubmit={handleSubmit}>
-      <h2>Pubblica una nuova disponibilità</h2>
+    <div className="card">
+      <h3>
+        <SyringeIcon size={18} /> Le mie prestazioni
+      </h3>
+      <p className="muted small">
+        Definisci tu quali prestazioni offri e la paga minima per ciascuna: iniezioni, prelievi, ECG,
+        intramuscolo… o prestazioni più specifiche come un impianto PICC, a tua discrezione.
+      </p>
 
-      <label htmlFor="title">Titolo</label>
-      <input id="title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-
-      <label htmlFor="description">Descrizione</label>
-      <textarea
-        id="description"
-        rows={3}
-        value={form.description}
-        onChange={(e) => setForm({ ...form, description: e.target.value })}
-      />
-
-      <label htmlFor="careSetting">Ambiente</label>
-      <select
-        id="careSetting"
-        value={form.careSetting}
-        onChange={(e) => setForm({ ...form, careSetting: e.target.value as CareSetting })}
-      >
-        {CARE_SETTINGS_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
+      <div className="service-suggestions">
+        {SERVICE_SUGGESTIONS.map((s) => (
+          <button key={s} type="button" className="chip-button" onClick={() => setName(s)}>
+            {s}
+          </button>
         ))}
-      </select>
-
-      <label htmlFor="shiftType">Turno</label>
-      <select
-        id="shiftType"
-        value={form.shiftType}
-        onChange={(e) => setForm({ ...form, shiftType: e.target.value as ShiftType })}
-      >
-        {SHIFT_TYPE_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-
-      <div className="checkbox-row">
-        <label>
-          <input
-            type="checkbox"
-            checked={form.isHoliday}
-            onChange={(e) => setForm({ ...form, isHoliday: e.target.checked })}
-          />
-          Festivo
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={form.isWeekend}
-            onChange={(e) => setForm({ ...form, isWeekend: e.target.checked })}
-          />
-          Weekend
-        </label>
       </div>
 
-      <label htmlFor="serviceDate">Data e ora del servizio</label>
-      <input
-        id="serviceDate"
-        type="datetime-local"
-        value={form.serviceDate}
-        onChange={(e) => setForm({ ...form, serviceDate: e.target.value })}
-        required
-      />
-
-      <label htmlFor="durationHours">Durata (ore)</label>
-      <input
-        id="durationHours"
-        type="number"
-        min={0.5}
-        step="0.5"
-        value={form.durationHours}
-        onChange={(e) => setForm({ ...form, durationHours: Number(e.target.value) })}
-      />
-
-      <label htmlFor="listingCity">Città</label>
-      <input
-        id="listingCity"
-        value={form.city}
-        onChange={(e) => setForm({ ...form, city: e.target.value })}
-        required
-      />
-
-      <label htmlFor="startingPrice">Prezzo di partenza (€/h, vuoto = tua paga minima)</label>
-      <input
-        id="startingPrice"
-        type="number"
-        min={0}
-        step="0.5"
-        value={form.startingPrice}
-        onChange={(e) => setForm({ ...form, startingPrice: e.target.value })}
-      />
-
+      <form className="add-service-form" onSubmit={handleAdd}>
+        <input placeholder="Nome prestazione" value={name} onChange={(e) => setName(e.target.value)} required />
+        <input
+          type="number"
+          min={0}
+          step="0.5"
+          placeholder="Paga minima (€)"
+          value={minPrice}
+          onChange={(e) => setMinPrice(e.target.value)}
+          required
+        />
+        <button type="submit" className="btn-primary" disabled={submitting}>
+          <PlusIcon size={16} /> Aggiungi
+        </button>
+      </form>
       {error && <p className="error">{error}</p>}
-      {success && <p className="success">{success}</p>}
-      <button type="submit" disabled={submitting}>
-        {submitting ? "Pubblicazione…" : "Pubblica e avvia l'asta"}
-      </button>
-    </form>
+
+      <div className="service-manage-list">
+        {services.map((service) => {
+          const auction = auctionByServiceId.get(service.id);
+          return (
+            <div key={service.id} className="service-manage-row">
+              <div>
+                <strong>{service.name}</strong>
+                <PriceBadge amount={service.minPrice} type="SERVICE" suffix=" min" />
+              </div>
+              <div className="service-manage-actions">
+                {auction ? (
+                  <Link to={`/auctions/${auction.id}`} className="status-pill status-open">
+                    Asta aperta — {auction.currentPrice} €
+                  </Link>
+                ) : (
+                  <button className="btn-ghost" onClick={() => openServiceAuction(service.id)}>
+                    Apri asta
+                  </button>
+                )}
+                <button className="icon-button" onClick={() => handleDelete(service.id)} aria-label="Elimina">
+                  <TrashIcon size={16} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {services.length === 0 && <p className="muted">Non hai ancora aggiunto prestazioni.</p>}
+      </div>
+    </div>
   );
 }

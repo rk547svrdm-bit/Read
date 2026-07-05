@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ClockIcon } from "./Icon";
 
 function formatRemaining(ms: number): string {
   if (ms <= 0) return "Asta terminata";
@@ -6,7 +7,8 @@ function formatRemaining(ms: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${hours}h ${minutes}m ${seconds}s`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m ${seconds}s`;
 }
 
 export function CountdownTimer({ endAt }: { endAt: string }) {
@@ -19,5 +21,10 @@ export function CountdownTimer({ endAt }: { endAt: string }) {
 
   const remaining = new Date(endAt).getTime() - now;
 
-  return <span className={remaining <= 0 ? "countdown countdown-ended" : "countdown"}>{formatRemaining(remaining)}</span>;
+  return (
+    <span className={remaining <= 0 ? "countdown countdown-ended" : "countdown"}>
+      <ClockIcon size={14} />
+      {formatRemaining(remaining)}
+    </span>
+  );
 }

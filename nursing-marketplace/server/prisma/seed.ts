@@ -10,7 +10,7 @@ async function main() {
   await prisma.booking.deleteMany();
   await prisma.bid.deleteMany();
   await prisma.auction.deleteMany();
-  await prisma.listing.deleteMany();
+  await prisma.nurseService.deleteMany();
   await prisma.nurseProfile.deleteMany();
   await prisma.clientProfile.deleteMany();
   await prisma.user.deleteMany();
@@ -23,8 +23,9 @@ async function main() {
       nurseProfile: {
         create: {
           fullName: "Paolo Gullì",
-          headline: "Infermiere libero professionista - assistenza domiciliare",
+          headline: "Infermiere libero professionista · assistenza domiciliare",
           bio: "Oltre 10 anni di esperienza in assistenza infermieristica a domicilio, medicazioni complesse e prelievi. Copertura assicurativa RC professionale.",
+          photoUrl: "https://i.pravatar.cc/400?img=12",
           licenseNumber: "IPASVI-TO-12345",
           yearsExperience: 10,
           skillsJson: JSON.stringify(["Medicazioni avanzate", "Prelievi ematici", "Gestione stomie", "Terapie infusive"]),
@@ -38,10 +39,19 @@ async function main() {
           acceptsNights: false,
           preferredShiftsJson: JSON.stringify(["MORNING", "AFTERNOON"]),
           careSettingsJson: JSON.stringify(["HOME_CARE", "OUTPATIENT_CLINIC"]),
+          services: {
+            create: [
+              { name: "Iniezione", minPrice: 15 },
+              { name: "Prelievo ematico", minPrice: 20 },
+              { name: "Elettrocardiogramma (ECG)", minPrice: 25 },
+              { name: "Medicazione avanzata", minPrice: 30 },
+              { name: "Impianto PICC", description: "Su appuntamento, valutazione preliminare richiesta", minPrice: 90 },
+            ],
+          },
         },
       },
     },
-    include: { nurseProfile: true },
+    include: { nurseProfile: { include: { services: true } } },
   });
 
   const nurse2User = await prisma.user.create({
@@ -54,6 +64,7 @@ async function main() {
           fullName: "Giulia Bianchi",
           headline: "Infermiera di sala operatoria",
           bio: "Specializzata in strumentazione di sala operatoria e reparti chirurgici, disponibile anche su turni notturni e festivi.",
+          photoUrl: "https://i.pravatar.cc/400?img=47",
           yearsExperience: 6,
           skillsJson: JSON.stringify(["Strumentazione chirurgica", "Gestione emergenze", "Anestesia locale assistita"]),
           specializationsJson: JSON.stringify(["Sala operatoria", "Chirurgia generale"]),
@@ -66,10 +77,16 @@ async function main() {
           acceptsNights: true,
           preferredShiftsJson: JSON.stringify(["MORNING", "AFTERNOON", "NIGHT", "FULL_DAY"]),
           careSettingsJson: JSON.stringify(["OPERATING_ROOM", "HOSPITAL_WARD"]),
+          services: {
+            create: [
+              { name: "Assistenza a intervento chirurgico", minPrice: 120 },
+              { name: "Intramuscolo", minPrice: 15 },
+            ],
+          },
         },
       },
     },
-    include: { nurseProfile: true },
+    include: { nurseProfile: { include: { services: true } } },
   });
 
   const clientUser = await prisma.user.create({
@@ -83,43 +100,42 @@ async function main() {
     },
   });
 
-  const listing = await prisma.listing.create({
-    data: {
-      nurseId: nurse1User.nurseProfile!.id,
-      title: "Medicazione post-operatoria a domicilio - sabato mattina",
-      description: "Cambio medicazione e controllo parametri vitali per paziente post-chirurgico.",
-      careSetting: "HOME_CARE",
-      shiftType: "MORNING",
-      isHoliday: false,
-      isWeekend: true,
-      serviceDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      durationHours: 2,
-      city: "Torino",
-      startingPrice: 25,
-      status: "PUBLISHED",
-    },
-  });
+  const nurse1 = nurse1User.nurseProfile!;
+  const medicazioneService = nurse1.services.find((s) => s.name === "Medicazione avanzata")!;
 
   const now = new Date();
-  const auction = await prisma.auction.create({
+
+  // Asta oraria aperta su Paolo, con un'offerta già ricevuta.
+  const hourlyAuction = await prisma.auction.create({
     data: {
-      listingId: listing.id,
+      nurseId: nurse1.id,
+      type: "HOURLY",
       startAt: now,
       endAt: new Date(now.getTime() + 48 * 60 * 60 * 1000),
       minIncrement: 1,
-      startingPrice: 25,
+      startingPrice: nurse1.minHourlyRate,
       currentPrice: 27,
       status: "OPEN",
     },
   });
-
-  const bid = await prisma.bid.create({
-    data: { auctionId: auction.id, clientId: clientUser.id, amount: 27, status: "WINNING" },
+  const hourlyBid = await prisma.bid.create({
+    data: { auctionId: hourlyAuction.id, clientId: clientUser.id, amount: 27, status: "WINNING" },
   });
+  await prisma.auction.update({ where: { id: hourlyAuction.id }, data: { currentHighestBidId: hourlyBid.id } });
 
-  await prisma.auction.update({
-    where: { id: auction.id },
-    data: { currentHighestBidId: bid.id },
+  // Asta a prestazione aperta su Paolo (medicazione avanzata), senza ancora offerte.
+  await prisma.auction.create({
+    data: {
+      nurseId: nurse1.id,
+      type: "SERVICE",
+      serviceId: medicazioneService.id,
+      startAt: now,
+      endAt: new Date(now.getTime() + 48 * 60 * 60 * 1000),
+      minIncrement: 2,
+      startingPrice: medicazioneService.minPrice,
+      currentPrice: medicazioneService.minPrice,
+      status: "OPEN",
+    },
   });
 
   console.log("Seed completato:");

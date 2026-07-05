@@ -5,6 +5,7 @@ export const upsertNurseProfileSchema = z.object({
   fullName: z.string().min(2),
   headline: z.string().max(140).optional(),
   bio: z.string().max(4000).default(""),
+  photoUrl: z.string().url().optional(),
   licenseNumber: z.string().optional(),
   yearsExperience: z.number().int().min(0).default(0),
   skills: z.array(z.string()).default([]),

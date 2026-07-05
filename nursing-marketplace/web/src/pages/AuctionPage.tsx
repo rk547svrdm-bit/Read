@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { api, ApiError } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import type { Auction, Bid, Listing } from "../api/types";
-import { CARE_SETTING_LABELS, SHIFT_TYPE_LABELS } from "../api/types";
+import type { Auction, Bid } from "../api/types";
+import { Avatar } from "../components/Avatar";
+import { AuctionTypeBadge, AuctionStatusBadge } from "../components/Badges";
 import { CountdownTimer } from "../components/CountdownTimer";
+import { CoinIcon } from "../components/Icon";
 
 interface AuctionDetail extends Auction {
-  listing: Listing;
   bids: Bid[];
 }
 
 export function AuctionPage() {
-  // :id qui è l'id del listing (come nei link da ListingCard); l'asta
-  // associata viene poi risolta a partire da listing.auction.id.
-  const { id: listingId } = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [auction, setAuction] = useState<AuctionDetail | null>(null);
   const [amount, setAmount] = useState("");
@@ -23,19 +22,14 @@ export function AuctionPage() {
   const [submitting, setSubmitting] = useState(false);
 
   async function load() {
-    if (!listingId) return;
-    const listing = await api.get<Listing & { auction: Auction | null }>(`/listings/${listingId}`);
-    if (!listing.auction) {
-      setError("Questa inserzione non ha ancora un'asta associata");
-      return;
-    }
-    const data = await api.get<AuctionDetail>(`/auctions/${listing.auction.id}`);
+    if (!id) return;
+    const data = await api.get<AuctionDetail>(`/auctions/${id}`);
     setAuction(data);
   }
 
   useEffect(() => {
     load().catch((err) => setError(err.message));
-  }, [listingId]);
+  }, [id]);
 
   async function handleBid(e: React.FormEvent) {
     e.preventDefault();
@@ -61,33 +55,43 @@ export function AuctionPage() {
 
   const minNextBid =
     auction.bids.length === 0 ? auction.startingPrice : auction.currentPrice + auction.minIncrement;
+  const title = auction.type === "HOURLY" ? "Tariffa oraria" : auction.service?.name ?? "Prestazione";
 
   return (
     <div className="page">
-      <div className="card">
-        <h1>{auction.listing.title}</h1>
-        <p className="tag-list">
-          <span className="tag">{CARE_SETTING_LABELS[auction.listing.careSetting]}</span>
-          <span className="tag">{SHIFT_TYPE_LABELS[auction.listing.shiftType]}</span>
-          {auction.listing.isHoliday && <span className="tag tag-warning">Festivo</span>}
-        </p>
-        <p>{auction.listing.description}</p>
-        <p>
-          <strong>Data servizio:</strong> {new Date(auction.listing.serviceDate).toLocaleString("it-IT")}
-        </p>
-        <p>
-          <strong>Città:</strong> {auction.listing.city}
-        </p>
+      <div className={`card auction-hero auction-hero-${auction.type === "HOURLY" ? "hourly" : "service"}`}>
+        {auction.nurse && (
+          <Link to={`/nurses/${auction.nurse.id}`} className="auction-hero-nurse">
+            <Avatar photoUrl={auction.nurse.photoUrl} name={auction.nurse.fullName} size={56} ring />
+            <div>
+              <div className="auction-hero-nurse-name">{auction.nurse.fullName}</div>
+              <div className="muted small">{auction.nurse.city}</div>
+            </div>
+          </Link>
+        )}
 
-        <div className="auction-status">
-          <span className="price price-large">Offerta attuale: {auction.currentPrice} €/h</span>
+        <div className="auction-hero-badges">
+          <AuctionTypeBadge type={auction.type} />
+          <AuctionStatusBadge status={auction.status} />
+        </div>
+
+        <h1>{title}</h1>
+        {auction.service?.description && <p className="muted">{auction.service.description}</p>}
+
+        <div className="auction-price-panel">
+          <CoinIcon size={28} />
+          <div>
+            <div className="auction-price-value">
+              {auction.currentPrice} € {auction.type === "HOURLY" ? "/h" : ""}
+            </div>
+            <div className="muted small">Offerta attuale</div>
+          </div>
           <CountdownTimer endAt={auction.endAt} />
-          <span className="badge">{auction.status}</span>
         </div>
 
         {auction.status === "OPEN" && user?.role === "CLIENT" && (
           <form className="bid-form" onSubmit={handleBid}>
-            <label htmlFor="amount">La tua offerta (minimo {minNextBid} €/h)</label>
+            <label htmlFor="amount">La tua offerta (minimo {minNextBid} €)</label>
             <input
               id="amount"
               type="number"
@@ -97,7 +101,7 @@ export function AuctionPage() {
               onChange={(e) => setAmount(e.target.value)}
               required
             />
-            <button type="submit" disabled={submitting}>
+            <button type="submit" className="btn-primary" disabled={submitting}>
               {submitting ? "Invio…" : "Fai un'offerta"}
             </button>
           </form>
@@ -109,29 +113,16 @@ export function AuctionPage() {
       </div>
 
       <h2>Storico offerte</h2>
-      <table className="bids-table">
-        <thead>
-          <tr>
-            <th>Importo</th>
-            <th>Stato</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          {auction.bids.map((bid) => (
-            <tr key={bid.id}>
-              <td>{bid.amount} €/h</td>
-              <td>{bid.status}</td>
-              <td>{new Date(bid.createdAt).toLocaleString("it-IT")}</td>
-            </tr>
-          ))}
-          {auction.bids.length === 0 && (
-            <tr>
-              <td colSpan={3}>Nessuna offerta ancora ricevuta.</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <div className="bid-list">
+        {auction.bids.map((bid) => (
+          <div key={bid.id} className={`bid-row ${bid.status === "WINNING" ? "bid-row-winning" : ""}`}>
+            <span className="bid-amount">{bid.amount} €</span>
+            <span className={`status-pill status-${bid.status.toLowerCase()}`}>{bid.status}</span>
+            <span className="muted small">{new Date(bid.createdAt).toLocaleString("it-IT")}</span>
+          </div>
+        ))}
+        {auction.bids.length === 0 && <p className="muted">Nessuna offerta ancora ricevuta.</p>}
+      </div>
     </div>
   );
 }
