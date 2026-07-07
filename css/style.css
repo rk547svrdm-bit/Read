@@ -637,3 +637,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   .values-grid { grid-template-columns: 1fr; }
   .section { padding: 64px 0; }
 }
+
+/* Contatti a colonna singola (form rimosso) */
+.contatti-inner { max-width: 720px; }
+.footer-copy a { color: var(--teal-light); }
